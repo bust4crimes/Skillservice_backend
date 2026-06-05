@@ -1,16 +1,15 @@
 import logging
 import os
-import json # ◄── Added to parse the cloud JSON secret
+import json
+import uvicorn
 from contextlib import asynccontextmanager
 
 import firebase_admin
 from firebase_admin import credentials
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from pythonjsonlogger import jsonlogger
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.responses import Response
 
 # Internal Modules
 from .config import settings
@@ -61,17 +60,14 @@ async def lifespan(app: FastAPI):
     logger.info("Successfully connected to the MongoDB NoSQL Engine!")
     
     # --- FIREBASE CLOUD FIX ---
-    # Try to load credentials from a cloud environment variable first
     firebase_cloud_json = os.environ.get("FIREBASE_JSON_SECRET")
     cred_path = settings.FIREBASE_CREDENTIALS_PATH
 
     if firebase_cloud_json:
-        # We are in the cloud! Load the JSON string directly
         cred = credentials.Certificate(json.loads(firebase_cloud_json))
         firebase_admin.initialize_app(cred)
         logger.info("Firebase Admin initialized via Cloud Environment Variable!")
     elif os.path.exists(cred_path):
-        # We are on your local computer! Load the file
         cred = credentials.Certificate(cred_path)
         firebase_admin.initialize_app(cred)
         logger.info("Firebase Admin SDK successfully initialized via local file!")
@@ -94,7 +90,7 @@ app.add_middleware(SecurityHeadersMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # ◄── Set to allow all origins so Flutter doesn't get blocked
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],  
     allow_headers=["*"],  
@@ -104,16 +100,21 @@ app.add_middleware(
 # Include all endpoint routers
 app.include_router(auth.router)
 app.include_router(posts.router)
-app.include_router(reviews.router)  
-app.include_router(bookings.router)  
-app.include_router(user_settings_router.router)  
-app.include_router(chat.router)  
+app.include_router(reviews.router) 
+app.include_router(bookings.router) 
+app.include_router(user_settings_router.router) 
+app.include_router(chat.router) 
 app.include_router(notifications.router) 
 app.include_router(app_settings.router)
-app.include_router(locations.router)  
+app.include_router(locations.router) 
 
 
 # --- Root Endpoint ---
 @app.get("/", tags=["Health Check"])
 def root():
     return {"status": "Running", "database": "MongoDB NoSQL Engine Active"}
+
+# --- Dynamic Port Binding for Render ---
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("app.main:app", host="0.0.0.0", port=port)

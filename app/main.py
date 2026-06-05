@@ -101,9 +101,6 @@ app.add_middleware(
 )
 
 
-# --- Static Files & Routing ---
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
 # Include all endpoint routers
 app.include_router(auth.router)
 app.include_router(posts.router)

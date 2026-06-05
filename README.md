@@ -1,33 +1,48 @@
-# SkillService Backend
-Social media API for sideline jobs built with FastAPI.
+# 💡 SkillService
 
-## MVC Structure
-- **Models**: SQLAlchemy tables in `app/models.py`
-- **Views**: Pydantic schemas in `app/schemas.py`
-- **Controllers**: API logic in `app/routers/`
+**A Master Social & Skills Development Ecosystem**
 
-## Features
-- FastAPI backend with automatic Swagger docs at `/docs`
-- SQLite database connection through SQLAlchemy
-- Full CRUD for users, posts, and reviews
-- Pydantic request/response validation
-- Error handling for missing records, invalid ownership, and invalid review users
+SkillService is a cross-platform platform that connects users to offer and request skills. Built with a modern, decoupled architecture, it features a highly responsive mobile/web frontend and a blazing-fast Python backend.
 
-## Setup
-1. `python -m venv venv`
-2. `.\venv\Scripts\activate`
-3. `pip install -r requirements.txt`
-4. `uvicorn app.main:app --reload`
+---
 
-Server URL: `http://127.0.0.1:8000`
+## 🚀 Tech Stack
 
-Swagger UI: `http://127.0.0.1:8000/docs`
+### **Frontend (Mobile & Web)**
+* **Framework:** [Flutter](https://flutter.dev/) (Dart)
+* **Platforms Supported:** Android, iOS, and Web browsers
+* **State Management:** Provider
+* **Authentication Client:** Firebase Auth (Email/Password, Google Sign-In)
 
-## Test Script
-With the server running, open a second terminal and run:
+### **Backend (API)**
+* **Framework:** [FastAPI](https://fastapi.tiangolo.com/) (Python 3)
+* **Server:** Uvicorn
+* **Authentication Verification:** Firebase Admin SDK 
+* **Cloud Hosting:** Render
 
-```powershell
-python test_script.py
-```
+### **Database**
+* **Engine:** MongoDB (NoSQL)
+* **ODM:** Motor (Async Python driver for MongoDB)
 
-The script creates, reads, updates, and deletes users, posts, and reviews to verify the endpoints.
+---
+
+## ✨ Core Features
+
+* **Secure Authentication:** Seamless login and registration backed by Google's Firebase Authentication, featuring email verification and secure session handling.
+* **Discovery Feed:** A real-time, filterable feed where users can browse active skill offers and requests.
+* **Dynamic Skill Posting:** Users can easily create and publish new skills to the community.
+* **Cross-Platform Compatibility:** Runs flawlessly natively on Android devices or perfectly in a web browser.
+* **Cloud-Ready:** Backend API is fully configured for deployment on modern cloud providers using environment variables for secure secret management.
+
+---
+
+## 🛠️ Local Development Setup
+
+If you want to run this project on your local machine, follow these steps:
+
+### 1. Backend Setup (FastAPI)
+1. Navigate to the backend directory: `cd Skillservice_backend`
+2. Create and activate a virtual environment:
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate  # On Windows use: .venv\Scripts\activate

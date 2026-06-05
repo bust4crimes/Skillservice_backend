@@ -1,0 +1,17 @@
+# Environments
+.venv/
+env/
+venv/
+
+# Python Cache
+__pycache__/
+*.pyc
+
+# IDEs and OS files
+.vscode/
+.DS_Store
+
+# 🚨 SECRETS (Do NOT upload these!)
+firebase_credentials.json
+.env
+node_modules/

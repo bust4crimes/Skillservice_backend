@@ -37,6 +37,7 @@ class PostCreate(BaseModel):
     title: str
     description: str
     type: str
+    owner_id: str = ""
 
 class CommentResponse(BaseModel):
     id: str

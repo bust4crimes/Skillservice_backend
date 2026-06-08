@@ -4,36 +4,33 @@ from .. import models, schemas
 
 router = APIRouter(prefix="/posts", tags=["News Feed & Search"])
 
+def _post_to_response(p: models.Post) -> schemas.PostResponse:
+    return schemas.PostResponse(
+        id=str(p.id),
+        title=p.title,
+        description=p.description,
+        type=p.type,
+        owner_id=p.owner_id,
+        media_urls=p.media_urls,
+        comments=[schemas.CommentResponse(
+            id=c.id, user_id=c.user_id, user_name=c.user_name,
+            comment_text=c.comment_text, timestamp=c.timestamp,
+        ) for c in p.comments],
+        is_deleted=p.is_deleted,
+        deleted_at=p.deleted_at,
+    )
+
 @router.post("/", response_model=schemas.PostResponse)
 async def create_post(post: schemas.PostCreate):
     new_post = models.Post(**post.dict())
     await new_post.insert()
-    return schemas.PostResponse(
-        id=str(new_post.id),
-        title=new_post.title,
-        description=new_post.description,
-        type=new_post.type,
-        owner_id=new_post.owner_id,
-        media_urls=new_post.media_urls,
-        comments=[schemas.CommentResponse(
-            id=c.id,
-            user_id=c.user_id,
-            user_name=c.user_name,
-            comment_text=c.comment_text,
-            timestamp=c.timestamp,
-        ) for c in new_post.comments],
-        is_deleted=new_post.is_deleted,
-        deleted_at=new_post.deleted_at,
-    )
+    return _post_to_response(new_post)
 
 @router.get("/all", response_model=List[schemas.PostResponse])
 async def get_all_posts():
-    """
-    Fetches all active, unarchived, and non-deleted posts to populate the main feed.
-    """
     query = {"is_deleted": False, "is_archived": False}
     posts = await models.Post.find(query).to_list()
-    return posts
+    return [_post_to_response(p) for p in posts]
 
 @router.get("/search", response_model=List[schemas.PostResponse])
 async def search_posts(
@@ -43,11 +40,10 @@ async def search_posts(
 ):
     query = {"is_deleted": False, "is_archived": False}
     if post_type: query["type"] = post_type
-    
     posts = await models.Post.find(query).to_list()
     if keyword:
         posts = [p for p in posts if keyword.lower() in p.title.lower()]
-    return posts
+    return [_post_to_response(p) for p in posts]
 
 @router.put("/archive/{post_id}")
 async def archive_post(post_id: str):
@@ -60,7 +56,8 @@ async def archive_post(post_id: str):
 
 @router.get("/recently-deleted", response_model=List[schemas.PostResponse])
 async def get_recently_deleted(user_id: str):
-    return await models.Post.find({"owner_id": user_id, "is_deleted": True}).to_list()
+    posts = await models.Post.find({"owner_id": user_id, "is_deleted": True}).to_list()
+    return [_post_to_response(p) for p in posts]
 
 @router.put("/restore/{post_id}")
 async def restore_post(post_id: str):

@@ -98,7 +98,9 @@ async def settings_update_avatar(user_id: str, file: UploadFile = File(...), req
             shutil.copyfileobj(file.file, buffer)
     except Exception:
         raise HTTPException(status_code=500, detail="Failed to save uploaded file.")
-    base_url = str(request.base_url).rstrip("/")
+    host = request.headers.get("x-forwarded-host") or request.headers.get("host") or "skillservice-backend.onrender.com"
+    scheme = request.headers.get("x-forwarded-proto", "https")
+    base_url = f"{scheme}://{host}"
     image_url = f"{base_url}/static/uploads/{custom_filename}"
     user.profile_picture = image_url
     await user.save()

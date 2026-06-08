@@ -6,9 +6,12 @@ router = APIRouter(prefix="/posts", tags=["News Feed & Search"])
 
 @router.post("/", response_model=schemas.PostResponse)
 async def create_post(post: schemas.PostCreate):
-    new_post = models.Post(**post.dict())
-    await new_post.insert()
-    return new_post
+    try:
+        new_post = models.Post(**post.model_dump())
+        await new_post.insert()
+        return new_post
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Post creation failed: {str(e)}")
 
 @router.get("/all", response_model=List[schemas.PostResponse])
 async def get_all_posts():

@@ -140,24 +140,25 @@ async def upload_chat_file(
 # 📄 3. UNIFIED CHAT HISTORY LOGS
 @router.get("/history/{user_a}/{user_b}")
 async def get_chat_history(user_a: str, user_b: str):
-    messages = await models.ChatMessage.find(
-        ((models.ChatMessage.sender_id == user_a) & (models.ChatMessage.receiver_id == user_b)) |
-        ((models.ChatMessage.sender_id == user_b) & (models.ChatMessage.receiver_id == user_a))
-    ).to_list()
-    messages.sort(key=lambda m: m.timestamp)
-
-    return [
-        {
-            "id": str(m.id),
-            "sender_id": m.sender_id,
-            "receiver_id": m.receiver_id,
-            "message": m.message,
-            "msg_type": m.msg_type,
-            "media_url": m.media_url,
-            "reactions": [{"user_id": r.user_id, "emoji": r.emoji} for r in m.reactions],
-            "timestamp": m.timestamp.isoformat() if m.timestamp else None,
-        } for m in messages
-    ]
+    try:
+        filter_a = (models.ChatMessage.sender_id == user_a) & (models.ChatMessage.receiver_id == user_b)
+        filter_b = (models.ChatMessage.sender_id == user_b) & (models.ChatMessage.receiver_id == user_a)
+        messages = await models.ChatMessage.find(filter_a | filter_b).to_list()
+        messages.sort(key=lambda m: m.timestamp)
+        return [
+            {
+                "id": str(m.id),
+                "sender_id": m.sender_id,
+                "receiver_id": m.receiver_id,
+                "message": m.message,
+                "msg_type": m.msg_type,
+                "media_url": m.media_url,
+                "reactions": [{"user_id": r.user_id, "emoji": r.emoji} for r in m.reactions],
+                "timestamp": m.timestamp.isoformat() if m.timestamp else None,
+            } for m in messages
+        ]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 # 🗑️ 4. DELETE / UNSEND MESSAGE ENDPOINT
 @router.delete("/delete-message/{message_id}")

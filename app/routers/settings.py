@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status, UploadFile, File
+from fastapi import APIRouter, HTTPException, status, UploadFile, File, Request
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 import random
@@ -85,7 +85,7 @@ async def update_app_personalization(user_id: str, data: PersonalizationRequest)
     }
 
 @router.post("/update-avatar/{user_id}")
-async def settings_update_avatar(user_id: str, file: UploadFile = File(...)):
+async def settings_update_avatar(user_id: str, file: UploadFile = File(...), request: Request = None):
     user = await models.User.get(user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User record not found.")
@@ -93,11 +93,13 @@ async def settings_update_avatar(user_id: str, file: UploadFile = File(...)):
     custom_filename = f"avatar_{user_id}{file_extension}"
     file_path = os.path.join("static/uploads", custom_filename)
     try:
+        os.makedirs("static/uploads", exist_ok=True)
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
     except Exception:
-        raise HTTPException(status_code=500, detail="Overwriting target file system paths dropped.")
-    image_url = f"http://127.0.0.1:8000/static/uploads/{custom_filename}"
+        raise HTTPException(status_code=500, detail="Failed to save uploaded file.")
+    base_url = str(request.base_url).rstrip("/")
+    image_url = f"{base_url}/static/uploads/{custom_filename}"
     user.profile_picture = image_url
     await user.save()
     return {"message": "Profile picture changed!", "profile_picture_url": image_url}

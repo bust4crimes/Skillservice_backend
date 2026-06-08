@@ -143,7 +143,8 @@ async def get_chat_history(user_a: str, user_b: str):
     messages = await models.ChatMessage.find(
         ((models.ChatMessage.sender_id == user_a) & (models.ChatMessage.receiver_id == user_b)) |
         ((models.ChatMessage.sender_id == user_b) & (models.ChatMessage.receiver_id == user_a))
-    ).sort(+models.ChatMessage.timestamp).to_list()
+    ).to_list()
+    messages.sort(key=lambda m: m.timestamp)
 
     return [
         {
@@ -154,7 +155,7 @@ async def get_chat_history(user_a: str, user_b: str):
             "msg_type": m.msg_type,
             "media_url": m.media_url,
             "reactions": [{"user_id": r.user_id, "emoji": r.emoji} for r in m.reactions],
-            "timestamp": m.timestamp
+            "timestamp": m.timestamp.isoformat() if m.timestamp else None,
         } for m in messages
     ]
 

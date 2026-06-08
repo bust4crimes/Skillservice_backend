@@ -4,17 +4,26 @@ from .. import models, schemas
 
 router = APIRouter(prefix="/reviews", tags=["Rating & Service Reviews Subsystem"])
 
+def _review_to_dict(r: models.Review) -> dict:
+    return {
+        "id": str(r.id),
+        "rating": r.rating,
+        "comment": r.comment,
+        "tag": r.tag,
+        "target_user_id": r.target_user_id,
+        "reviewer_id": r.reviewer_id,
+        "timestamp": r.timestamp.isoformat() if r.timestamp else None,
+    }
+
 @router.post("/create", response_model=schemas.ReviewResponse)
 async def submit_provider_review(review: schemas.ReviewCreate, reviewer_id: str):
     if reviewer_id == review.target_user_id:
         raise HTTPException(status_code=400, detail="Self-evaluations are blocked. You cannot review your own listing profiles.")
 
-    # 1. Verify target user exists
     target_user = await models.User.get(review.target_user_id)
     if not target_user:
         raise HTTPException(status_code=404, detail="The target user account could not be resolved.")
 
-    # 2. Insert standard transaction record into MongoDB review storage
     new_review = models.Review(
         rating=review.rating,
         comment=review.comment,
@@ -24,7 +33,6 @@ async def submit_provider_review(review: schemas.ReviewCreate, reviewer_id: str)
     )
     await new_review.insert()
 
-    # 3. Automatically inject skill rating breakdown
     skill_found = False
     for skill in target_user.skills:
         if skill.name.lower() == review.tag.lower():
@@ -53,7 +61,6 @@ async def submit_provider_review(review: schemas.ReviewCreate, reviewer_id: str)
 
     await target_user.save()
 
-    # 🔥 Blueprint: Trigger Notification for the target user
     reviewer = await models.User.get(reviewer_id)
     reviewer_name = f"{reviewer.first_name} {reviewer.last_name}" if reviewer else "A user"
     
@@ -65,9 +72,9 @@ async def submit_provider_review(review: schemas.ReviewCreate, reviewer_id: str)
         message=f"{reviewer_name} left you a {review.rating}-star review: '{review.comment[:20]}...'"
     ).insert()
 
-    return new_review
+    return _review_to_dict(new_review)
 
 @router.get("/target/{user_id}", response_model=List[schemas.ReviewResponse])
 async def get_all_reviews_for_user(user_id: str):
     user_reviews = await models.Review.find(models.Review.target_user_id == user_id).to_list()
-    return user_reviews
+    return [_review_to_dict(r) for r in user_reviews]

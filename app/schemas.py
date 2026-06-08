@@ -56,6 +56,7 @@ class PostResponse(BaseModel):
     comments: List[CommentResponse] = Field(default_factory=list)
     is_deleted: bool = False
     deleted_at: Optional[datetime] = None
+    timestamp: Optional[str] = None
 
     class Config:
         populate_by_name = True
@@ -94,6 +95,7 @@ class ReviewResponse(BaseModel):
     tag: Optional[str] = None
     target_user_id: str
     reviewer_id: str
+    timestamp: Optional[str] = None
 
     class Config:
         populate_by_name = True

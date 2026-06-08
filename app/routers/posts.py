@@ -18,6 +18,7 @@ def _post_to_response(p: models.Post) -> schemas.PostResponse:
         ) for c in p.comments],
         is_deleted=p.is_deleted,
         deleted_at=p.deleted_at,
+        timestamp=p.timestamp.isoformat() if p.timestamp else None,
     )
 
 @router.post("/", response_model=schemas.PostResponse)
